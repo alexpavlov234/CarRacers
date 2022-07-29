@@ -1,0 +1,47 @@
+﻿
+<div class="top-row ps-2 navbar navbar-">
+    <div class="container-fluid">
+        <a class="navbar-brand" style="
+color: white;"href="">Автомобилни състезатели</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="drivers" Match="NavLinkMatch.All">
+               <i class="material-icons">groups</i>&nbsp;&nbsp;Състезатели   
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cars">
+                  <i class="material-icons">directions_car</i>&nbsp; Коли
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="races">
+                 <i class="material-icons">star</i>&nbsp;&nbsp;Състезания
+            </NavLink>
+        </div>
+
+         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="ranking">
+                 <i class="material-icons">arrow_upward</i>&nbsp;Класация
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

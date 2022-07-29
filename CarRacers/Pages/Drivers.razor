@@ -1,0 +1,104 @@
+﻿@page "/"
+@page "/drivers"
+
+<PageTitle>Състезатели</PageTitle>
+
+<!-- @using DataLibrary -->
+@inject IDataAccess _data
+@inject IConfiguration _config
+@if (drivers == null)
+{
+			<p><em>Loading...</em></p>
+}
+else
+{
+			<h1>Състезатели</h1>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Собствено име</th>
+						<th>Бащино име</th>
+						<th>Фамилия</th>
+						<th>Възраст</th>
+						<th>Националност</th>
+						<th>Брой точки</th>
+						<th>Действия</th>
+					</tr>
+				</thead>
+				<tbody>
+			@foreach (var driver in drivers)
+			{
+								<tr>
+									<td> @driver.idDriver</td>
+
+									<td><input type="text"  @bind-value="@driver.firstNameDriver"></td>
+									<td><input type="text" @bind-value="@driver.middleNameDriver" /></td>
+									<td><input type="text"  @bind-value="@driver.lastNameDriver"></td>
+									<td><input type="number"  @bind-value="@driver.ageDriver"></td>
+									<td><input type="text"  @bind-value="@driver.nationalityDriver"></td>
+									<td><input type="number"  @bind-value="@driver.pointsDriver"></td>
+
+									<td><button class="btn btn-danger" @onclick="@(()=> RemoveDriver(@driver.idDriver))">Изтрий</button>
+
+										<button class="btn btn-warning" @onclick="@(()=> UpdateDriver(@driver.idDriver,@driver.firstNameDriver,@driver.middleNameDriver,@driver.lastNameDriver,@driver.ageDriver,@driver.nationalityDriver,@driver.pointsDriver))">Редактирай</button>
+										</td>
+								</tr>
+			}
+				</tbody>
+				<tfoot>
+					 <tr>
+							<td><button class="btn btn-primary" @onclick="AddDriver">Добави</button></td>
+							<td><input type="text" @bind-value="@FirstName" /></td>
+							<td><input type="text" @bind-value="@MiddleName" /></td>
+							<td><input type="text" @bind-value="@LastName" /></td>
+							<td><input type="number" @bind-value="@Age" /></td>
+							<td><input type="text" @bind-value="@Nationality" /></td>
+							<td><input type="number" @bind-value="@Points" /></td>
+						</tr>
+				</tfoot>
+			</table>
+
+}
+@code {
+	List<DriverModel> drivers;
+
+	private string FirstName { get; set; }
+	private string MiddleName { get; set; }
+	private string LastName { get; set; }
+	private int Age { get; set; } = 18;
+	private string Nationality { get; set; }
+	private int Points { get; set; }
+
+	private async Task AddDriver()
+	{
+		string sql = "INSERT into driver (firstNameDriver, middleNameDriver, lastNameDriver, ageDriver, nationalityDriver, pointsDriver) values (@FirstName, @MiddleName, @LastName, @Age, @Nationality, @Points)";
+		await _data.SaveData(sql, new { FirstName, MiddleName, LastName, Age, Nationality, Points }, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+		FirstName = null;
+		MiddleName = null;
+		LastName = null;
+		Age = 18;
+		Nationality = null;
+		Points = 0;
+	}
+	private async Task UpdateDriver(int idDriver, string firstNameDriver, string middleNameDriver, string lastNameDriver, int ageDriver, string nationalityDriver, int pointsDriver)
+	{
+		string sql = "UPDATE driver SET firstNameDriver = @firstNameDriver, middleNameDriver = @middleNameDriver, lastNameDriver = @lastNameDriver, ageDriver =  @ageDriver, nationalityDriver = @nationalityDriver, pointsDriver = @pointsDriver WHERE idDriver = @idDriver ";
+		await _data.SaveData(sql, new { idDriver, firstNameDriver, middleNameDriver, lastNameDriver, ageDriver, nationalityDriver, pointsDriver }, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+	}
+
+	private async Task RemoveDriver(int id)
+	{
+		string sql = "DELETE FROM driver WHERE idDriver = @id";
+		await _data.SaveData(sql, new { id }, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		string sql = "SELECT * FROM driver";
+		drivers = await _data.LoadData<DriverModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+	}
+}

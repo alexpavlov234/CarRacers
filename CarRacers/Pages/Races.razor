@@ -1,0 +1,120 @@
+﻿@page "/races"
+
+<PageTitle>Състезания</PageTitle>
+
+@inject IDataAccess _data
+@inject IConfiguration _config
+@if (races == null)
+{
+		<p><em>Loading...</em></p>
+}
+else
+{
+	<table>
+<thead>
+  <tr>
+    <th><h1>Състезания</h1>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Писта</th>
+					<th>Дата</th>
+					<th>Пробег</th>
+					<th>Времетраене</th>
+					<th>Точки</th>
+					<th>Действия</th>
+				</tr>
+			</thead>
+			<tbody>
+			@foreach (var race in races)
+			{
+						<tr>
+							<td> @race.idRace</td>
+							<td><input type="text"  @bind="@race.trackRace"></td>
+							<td><input type="date" @bind="@race.dateRace" /></td>
+							<td><input type="number"  @bind="@race.mileageRace"></td>
+							<td><input type="number"  @bind="@race.lengthRace"></td>
+							<td><input type="number"  @bind="@race.pointsRace"></td>
+									
+							<td><button class="btn btn-danger" @onclick="@(()=> RemoveRace(race.idRace))">Изтрий</button>
+
+								<button class="btn btn-warning" @onclick="@(()=> UpdateRace(race.idRace,race.trackRace,race.dateRace,race.mileageRace,race.lengthRace, race.pointsRace, race.racer,race.car))">Редактирай</button>
+								</td>
+						</tr>
+			}
+			</tbody>
+			<tfoot>
+				 <tr>
+						 <td><button class="btn btn-primary" @onclick="AddRace">Добави</button></td>
+						<td><input type="text" @bind-value="@Track" /></td>
+						<td><input type="date" @bind-value="@Date" /></td>
+						<td><input type="int" @bind-value="@Mileage" /></td>
+						<td><input type="int" @bind-value="@Length" /></td>
+						<td><input type="int" @bind-value="@Points" /></td>
+					</tr>
+			</tfoot>
+		</table>
+</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>
+		<RacesCarsDrivers/>
+		</td>
+  </tr>
+</tbody>
+</table>
+		
+
+
+}
+@code {
+	List<RaceModel> races;
+		
+	private int ID { get; set; }
+	private string Track { get; set; }
+	private DateTime Date { get; set; } = DateTime.Now;
+	private int Mileage	{ get; set; }
+	private int Length { get; set; }
+	private int Points	{ get; set; }
+
+	private async Task AddRace()
+	{
+		string sql = "INSERT IGNORE race (trackRace, dateRace, mileageRace, lengthRace, pointsRace) VALUES (@Track, @Date, @Mileage, @Length, @Points)";
+		await _data.SaveData(sql, new { Track, Date, Mileage, Length, Points}, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+		Track = null;
+		Date = DateTime.Now;
+		Mileage = 0;
+		Length = 0;
+		Points = 0;
+
+	}
+	
+	private async Task UpdateRace(int idRace,	string trackRace, DateTime	dateRace, int mileageRace, int	lengthRace, int	pointsRace, int	Driver ,int	Car)
+
+	{
+		string sql = "update race set trackRace = @trackRace, dateRace = @dateRace, mileageRace = @mileageRace, lengthRace = @lengthRace, pointsRace = @pointsRace WHERE idRace = @idRace ";
+		await _data.SaveData(sql, new { idRace,	trackRace,	dateRace,	mileageRace,	lengthRace,	pointsRace}, _config.GetConnectionString("default"));
+	    await OnInitializedAsync();
+	}
+	
+	private async Task RemoveRace(int id)
+	{
+		string sql = "DELETE FROM race WHERE idRace = @id";
+		await _data.SaveData(sql, new { id }, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+	}	
+	
+
+	protected override async Task OnInitializedAsync()
+	{
+		string sql = "SELECT * FROM race";
+		races = await _data.LoadData<RaceModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+		
+	}
+
+	
+}

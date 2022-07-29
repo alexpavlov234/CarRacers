@@ -1,0 +1,92 @@
+﻿@page "/cars"
+
+<PageTitle>Коли</PageTitle>
+
+<!-- @using DataLibrary -->
+@inject IDataAccess _data
+@inject IConfiguration _config
+@if (cars == null)
+{
+		<p><em>Loading...</em></p>
+}
+else
+{
+		<h1>Коли</h1>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Модел</th>
+					<th>Марка</th>
+					<th>Пробег</th>
+					<th>Дата на обслужване в сервиз</th>
+					<th>Действия</th>
+				</tr>
+			</thead>
+			<tbody>
+			@foreach (var car in cars)
+			{
+						<tr>
+							<td> @car.idCar</td>
+							<td><input type="text"  @bind="@car.modelCar"></td>
+							<td><input type="text" @bind="@car.brandCar" /></td>
+							<td><input type="number"  @bind="@car.mileageCar"></td>
+							<td><input type="date"  @bind="@car.serviceDate"></td>
+							
+							<td><button class="btn btn-danger" @onclick="@(()=> RemoveCar(@car.idCar))">Изтрий</button>
+
+								<button class="btn btn-warning" @onclick="@(()=> UpdateCar(@car.idCar,@car.modelCar,@car.brandCar,@car.mileageCar,@car.serviceDate))">Редактирай</button>
+								</td>
+						</tr>
+			}
+			</tbody>
+			<tfoot>
+				 <tr>
+						<td><button class="btn btn-primary" @onclick="AddCar">Добави</button></td>
+						<td><input type="text" id="modelCar" @bind-value="@Model" /></td>
+						<td><input type="text" id="brandCar" @bind-value="@Brand" /></td>
+						<td><input type="number" id="mileageCar" @bind-value="@Mileage" /></td>
+						<td><input type="date" id="serviceDate" @bind-value="@ServiceDate" /></td>
+					
+					</tr>
+			</tfoot>
+		</table>
+
+}
+@code {
+	List<CarModel> cars;
+
+	private string Model { get; set; }
+	private string Brand { get; set; }
+	private int Mileage { get; set; }
+	private DateTime ServiceDate { get; set; } = DateTime.Now;
+
+	private async Task AddCar()
+	{
+		string sql = "INSERT INTO car (modelCar, brandCar, mileageCar, serviceDate) VALUES (@Model, @Brand, @Mileage, @ServiceDate)";
+		await _data.SaveData(sql, new { Model, Brand, Mileage, ServiceDate}, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+		Model = null;
+		Brand = null;
+		Mileage = 0;
+		ServiceDate = DateTime.Now;
+	}
+	private async Task UpdateCar(int idCar,string modelCar,string brandCar,int mileageCar,DateTime serviceDate)
+	{
+		string sql = "UPDATE car SET modelCar = @modelCar, brandCar = @brandCar, mileageCar = @mileageCar, serviceDate = @serviceDate WHERE idCar = @idCar ";
+		await _data.SaveData(sql, new { idCar, modelCar ,brandCar, mileageCar, serviceDate}, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+	}
+	private async Task RemoveCar(int id)
+	{
+		string sql = "DELETE FROM car WHERE idCar = @id";
+		await _data.SaveData(sql, new { id }, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		string sql = "SELECT * FROM car";
+		cars = await _data.LoadData<CarModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+	}
+}

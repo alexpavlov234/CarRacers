@@ -1,0 +1,104 @@
+﻿
+
+<PageTitle>Състезания</PageTitle>
+
+<!-- @using DataLibrary -->
+@inject IDataAccess _data
+@inject IConfiguration _config
+@if ( carAndDriverRaces == null)
+{
+		<p><em>Loading...</em></p>
+}
+else
+{
+	
+  <h1>Записани участници</h1>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Състезание</th>
+					<th>Състезател</th>
+					<th>Кола</th>
+					<th>Действия</th>
+				</tr>
+			</thead>
+			<tbody>
+			@foreach (var race in  carAndDriverRaces)
+			{
+						<tr>
+							<td><input type="number" @bind="@race.idRace"></td>
+							<td><input type="number"  @bind="@race.idCar"></td>
+							<td><input type="number"  @bind="@race.idDriver"></td>
+							
+							
+							<td><button class="btn btn-danger" @onclick="@(()=> RemoveRaceFromHasCarAndDriver(race.id, race.idCar, race.idDriver, race.idRace))">Изтрий</button>
+
+								<button class="btn btn-warning" @onclick="@(()=> UpdateRaceCarDrivers(race.idRace,race.idCar,race.idDriver))">Редактирай</button>
+								</td>
+						</tr>
+			}
+			</tbody>
+			<tfoot>
+				 <tr>
+						
+						<td><input type="int" @bind-value="@ID" /></td>
+						<td><input type="int" @bind-value="@Driver" /></td>
+						<td><input type="int" @bind-value="@Car" /></td>
+						<td><button class="btn btn-primary" @onclick="AddRaceCarDrivers">Добави</button></td>
+					    
+					
+					</tr>
+			</tfoot>
+		</table>
+
+
+
+}
+@code {
+
+	List<RaceHasCarAndDriverModel> carAndDriverRaces ;
+
+	private int ID { get; set; }
+	private int Driver	{ get; set; }
+	private int Car { get; set; }
+
+	private async Task AddRaceCarDrivers()
+	{
+		string sql = "INSERT IGNORE race_has_car_and_driver (idRace, idCar, idDriver) VALUES (@ID, @Car, @Driver)";
+		await _data.SaveData(sql, new {@ID, @Car, @Driver}, _config.GetConnectionString("default"));
+		 _data.RunQuery("UPDATE driver SET pointsDriver = pointsDriver + (SELECT race.pointsRace FROM race WHERE race.idRace ="+ID+ " ) WHERE idDriver = " + Driver, _config.GetConnectionString("default"));
+		 _data.RunQuery("UPDATE car SET mileageCar = mileageCar + (SELECT race.mileageRace  FROM race WHERE race.idRace = "+ID+ " ) WHERE idCar = " + Car, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+		ID = 0;
+		Car = 0;
+		Driver = 0;
+
+	}
+	
+	private async Task UpdateRaceCarDrivers(int idRace,int	Car, int Driver )
+
+	{
+		string sql1 = "UPDATE race_has_car_and_driver SET idCar = @Car, idDriver = @Driver WHERE idRace = @idRace";
+		await _data.SaveData(sql1, new { idRace, Car, Driver}, _config.GetConnectionString("default"));
+		await OnInitializedAsync();
+	}
+	
+	private async Task RemoveRaceFromHasCarAndDriver(int id, int idCar, int idDriver, int idRace)
+	{
+		string sql = "DELETE from race_has_car_and_driver WHERE id = @id"; await _data.SaveData(sql, new { id }, _config.GetConnectionString("default"));
+		 _data.RunQuery("UPDATE driver SET pointsDriver = pointsDriver - (SELECT race.pointsRace FROM race WHERE race.idRace ="+idRace+ " ) WHERE idDriver = " + idDriver, _config.GetConnectionString("default"));
+		 _data.RunQuery("UPDATE car SET mileageCar = mileageCar - (SELECT race.mileageRace  FROM race WHERE race.idRace = "+idRace+ " ) WHERE idCar = " + idCar, _config.GetConnectionString("default"));
+		
+		
+		await OnInitializedAsync();
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		
+		string sql = "SELECT * FROM race_has_car_and_driver ORDER BY race_has_car_and_driver.id";
+		carAndDriverRaces = await _data.LoadData<RaceHasCarAndDriverModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+	}
+
+	
+}

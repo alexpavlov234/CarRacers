@@ -1,0 +1,53 @@
+﻿@page "/ranking"
+
+<PageTitle>Класация</PageTitle>
+
+<!-- @using DataLibrary -->
+@inject IDataAccess _data
+@inject IConfiguration _config
+@if (drivers == null)
+{
+		<p><em>Loading...</em></p>
+}
+else
+{
+		<h1>Класация</h1>
+		<table class="table">
+			<thead>
+				<tr>
+					<th>Собствено име</th>
+					<th>Бащино име</th>
+					<th>Фамилия</th>
+					<th>Националност</th>
+					<th>Брой точки</th>
+				
+				</tr>
+			</thead>
+			<tbody>
+			@foreach (var driver in drivers)
+			{
+						<tr>
+							
+
+							<td>@driver.firstNameDriver</td>
+							<td>@driver.middleNameDriver</td>
+							<td>@driver.lastNameDriver</td>
+							<td>@driver.nationalityDriver</td>
+							<td>@driver.pointsDriver</td>
+
+						</tr>
+			}
+			</tbody>
+			
+		</table>
+
+}
+@code {
+	List<DriverModel> drivers;
+
+	protected override async Task OnInitializedAsync()
+	{
+		string sql = "SELECT driver.firstNameDriver, driver.middleNameDriver, driver.lastNameDriver, driver.nationalityDriver,  driver.pointsDriver FROM driver  ORDER BY driver.pointsDriver DESC";
+		drivers = await _data.LoadData<DriverModel, dynamic>(sql, new { }, _config.GetConnectionString("default"));
+	}
+}
